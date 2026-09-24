@@ -61,6 +61,7 @@ h1, h2, p { margin-top: 0; } h1, h2 { font-weight: 500; letter-spacing: -.055em;
 .fraction-bar span { flex: 1; background: #eef2f8; border: 1px solid #cbd7e9; border-radius: 6px; transition: background .25s ease, border-color .25s ease; }
 .fraction-bar span.shaded { background: #dff5e7; border-color: #9dd7b2; box-shadow: inset 0 -5px 0 rgba(110,212,79,.13); }
 .fraction-bar-label { display: flex; justify-content: space-between; gap: 12px; color: #7b8ba1; font: 10px 'DM Mono'; margin-top: 12px; }
+.fraction-bar-label.single { justify-content: flex-end; }
 .fraction-input-line { display: flex; align-items: center; gap: 8px; color: #536bff; font: 25px 'DM Mono'; margin: 0 0 25px; }
 .fraction-input-line input { width: 68px; border: 0; border-bottom: 2px solid #536bff; background: transparent; padding: 8px 4px; color: #536bff; font: 25px 'DM Mono'; text-align: center; }
 .fraction-equivalence { display: flex; align-items: center; gap: 22px; margin-bottom: 29px; max-width: 540px; }
