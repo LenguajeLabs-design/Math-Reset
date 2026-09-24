@@ -13,13 +13,20 @@ export const defaultProgress: ProgressData = {
   recentProblems: [],
   reflectionResponses: [],
   preferredPatterns: { largeFriendlyChunk: 0 },
+  fractionProgress: { problemsCompleted: 0, correctStreak: 0, equivalentFractions: 0, comparisons: 0 },
 }
 
 export function loadProgress(): ProgressData {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (!stored) return defaultProgress
-    return { ...defaultProgress, ...JSON.parse(stored), preferredPatterns: { ...defaultProgress.preferredPatterns, ...JSON.parse(stored).preferredPatterns } }
+    const parsed = JSON.parse(stored)
+    return {
+      ...defaultProgress,
+      ...parsed,
+      preferredPatterns: { ...defaultProgress.preferredPatterns, ...parsed.preferredPatterns },
+      fractionProgress: { ...defaultProgress.fractionProgress, ...parsed.fractionProgress },
+    }
   } catch {
     return defaultProgress
   }

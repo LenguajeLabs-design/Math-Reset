@@ -4,9 +4,10 @@ import { Layout } from './components/Layout'
 import { NumberVisual } from './components/NumberVisual'
 import { ReflectionCard } from './components/ReflectionCard'
 import { divisionProblems } from './data/divisionProblems'
+import { fractionProblems } from './data/fractionProblems'
 import { describeStrategy, isValidSplit, parseNumber, splitFeedback } from './logic/divisionEngine'
 import { loadProgress, saveProgress } from './storage/progressStore'
-import type { Confidence, Problem, ProgressData, Screen } from './types'
+import type { Confidence, FractionProblem, Problem, ProgressData, Screen } from './types'
 import './styles.css'
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
     setScreen('practice')
   }
   const openProgress = () => setScreen('progress')
+  const beginFractions = () => setScreen('fractions')
   const finishSession = () => setScreen('complete')
   const nextProblem = () => {
     if (problemIndex >= sessionProblems.length - 1 || sessionCount >= 6) setScreen('complete')
@@ -45,7 +47,8 @@ function App() {
     {screen === 'checkin' && <Checkin onChoose={beginSession} />}
     {screen === 'practice' && sessionProblems[problemIndex] && <Practice key={sessionProblems[problemIndex].id} problem={sessionProblems[problemIndex]} problemNumber={sessionCount + 1} total={sessionProblems.length} progress={progress} onProgressUpdate={updateProgress} onNext={nextProblem} />}
     {screen === 'complete' && <Complete progress={progress} sessionCount={Math.max(sessionCount + 1, 1)} onAgain={practiceAgain} onProgress={openProgress} />}
-    {screen === 'progress' && <ProgressView progress={progress} onBack={() => setScreen('home')} />}
+    {screen === 'progress' && <ProgressView progress={progress} onBack={() => setScreen('home')} onStartFractions={beginFractions} />}
+    {screen === 'fractions' && <FractionPractice progress={progress} onProgressUpdate={updateProgress} onExit={openProgress} />}
   </Layout>
 }
 
@@ -185,14 +188,14 @@ function Complete({ progress, sessionCount, onAgain, onProgress }: { progress: P
   return <div className="complete-page"><div className="complete-mark"><CheckIcon /></div><span className="section-label">SESSION COMPLETE</span><h1>Nice work.<br /><em>That was enough for today.</em></h1><p className="complete-lede">{strategyMessage}</p><div className="session-summary"><div><span className="summary-number">{Math.max(progress.problemsCompleted, sessionCount)}</span><span>problems<br />explored</span></div><div><span className="summary-number">{progress.independentSolutions}</span><span>independent<br />solutions</span></div><div><span className="summary-number">{progress.hintsUsed}</span><span>hints<br />used</span></div></div><div className="complete-actions"><button className="button-primary" onClick={onAgain}>Practice again <ArrowRight /></button><button className="button-text" onClick={onProgress}>See your progress <ArrowRight /></button></div></div>
 }
 
-function ProgressView({ progress, onBack }: { progress: ProgressData; onBack: () => void }) {
+function ProgressView({ progress, onBack, onStartFractions }: { progress: ProgressData; onBack: () => void; onStartFractions: () => void }) {
   const concepts = [
     { label: 'Connect division and multiplication', done: progress.problemsCompleted > 0 },
     { label: 'Find friendly multiples', done: progress.problemsCompleted >= 2 },
     { label: 'Break numbers into easier chunks', done: progress.problemsCompleted >= 4 },
     { label: 'Work with remainders', done: progress.remaindersExplored > 0 },
   ]
-  return <div className="progress-page"><div className="progress-heading"><div><span className="section-label">YOUR PROGRESS</span><h1>A little more<br /><em>understanding.</em></h1></div><button className="button-text" onClick={onBack}><ArrowLeft /> Back to home</button></div><LearningPath progress={progress} /><NextLevels /><div className="progress-overview"><div className="progress-card progress-card-large"><span className="section-label">DIVISION</span><h2>Seeing numbers<br />as <em>friendly pieces.</em></h2><div className="concept-list">{concepts.map((concept) => <div key={concept.label} className={concept.done ? 'done' : ''}><span>{concept.done ? <CheckIcon /> : '○'}</span><strong>{concept.label}</strong></div>)}</div></div><div className="progress-stat-stack"><div className="stat-card"><span className="section-label">PROBLEMS EXPLORED</span><strong>{progress.problemsCompleted}</strong><span>one at a time</span></div><div className="stat-card"><span className="section-label">INDEPENDENT SOLUTIONS</span><strong>{progress.independentSolutions}</strong><span>your way in</span></div><div className="stat-card"><span className="section-label">HINTS USED</span><strong>{progress.hintsUsed}</strong><span>support when useful</span></div></div></div><div className="progress-note"><span>✦</span><p><strong>Your approach is part of the learning.</strong><br />We’re keeping track of ideas that help you — not just answers that are right.</p></div></div>
+  return <div className="progress-page"><div className="progress-heading"><div><span className="section-label">YOUR PROGRESS</span><h1>A little more<br /><em>understanding.</em></h1></div><button className="button-text" onClick={onBack}><ArrowLeft /> Back to home</button></div><LearningPath progress={progress} /><NextLevels progress={progress} onStart={onStartFractions} /><div className="progress-overview"><div className="progress-card progress-card-large"><span className="section-label">DIVISION</span><h2>Seeing numbers<br />as <em>friendly pieces.</em></h2><div className="concept-list">{concepts.map((concept) => <div key={concept.label} className={concept.done ? 'done' : ''}><span>{concept.done ? <CheckIcon /> : '○'}</span><strong>{concept.label}</strong></div>)}</div></div><div className="progress-stat-stack"><div className="stat-card"><span className="section-label">PROBLEMS EXPLORED</span><strong>{progress.problemsCompleted}</strong><span>one at a time</span></div><div className="stat-card"><span className="section-label">INDEPENDENT SOLUTIONS</span><strong>{progress.independentSolutions}</strong><span>your way in</span></div><div className="stat-card"><span className="section-label">HINTS USED</span><strong>{progress.hintsUsed}</strong><span>support when useful</span></div></div></div><div className="progress-note"><span>✦</span><p><strong>Your approach is part of the learning.</strong><br />We’re keeping track of ideas that help you — not just answers that are right.</p></div></div>
 }
 
 function LearningPath({ progress }: { progress: ProgressData }) {
@@ -202,6 +205,7 @@ function LearningPath({ progress }: { progress: ProgressData }) {
     { label: 'Break apart', detail: 'A difficult number', done: progress.problemsCompleted >= 4 },
     { label: 'Choose your way', detail: 'More than one good split', done: progress.currentStage >= 3 && progress.problemsCompleted >= 6 },
     { label: 'Remainders', detail: 'What does not divide evenly', done: progress.remaindersExplored > 0, upcoming: progress.currentStage < 4 },
+    { label: 'Fractions', detail: 'Equal pieces of a whole', done: progress.fractionProgress.problemsCompleted > 0, upcoming: progress.remaindersExplored === 0 },
   ]
   const currentIndex = path.findIndex((node) => !node.done && !node.upcoming)
 
@@ -213,14 +217,62 @@ function LearningPath({ progress }: { progress: ProgressData }) {
   </section>
 }
 
-function NextLevels() {
+function NextLevels({ progress, onStart }: { progress: ProgressData; onStart: () => void }) {
   const levels = [
     { number: '06', title: 'Fractions', detail: 'See parts as equal pieces.' },
     { number: '07', title: 'Decimals & percent', detail: 'Move between parts, wholes, and proportion.' },
     { number: '08', title: 'Early algebra', detail: 'Notice the unknown and find what balances.' },
   ]
 
-  return <section className="next-levels" aria-labelledby="next-levels-title"><div className="next-levels-heading"><div><span className="section-label">AFTER DIVISION</span><h2 id="next-levels-title">The crossing <em>continues.</em></h2></div><span className="path-caption">Future modules, held gently.</span></div><div className="next-level-grid">{levels.map((level) => <article className="next-level-card" key={level.title}><span className="next-level-number">{level.number}</span><div><h3>{level.title}</h3><p>{level.detail}</p></div><span className="next-level-state">UPCOMING</span></article>)}</div></section>
+  return <section className="next-levels" aria-labelledby="next-levels-title"><div className="next-levels-heading"><div><span className="section-label">AFTER DIVISION</span><h2 id="next-levels-title">The crossing <em>continues.</em></h2></div><span className="path-caption">Future modules, held gently.</span></div><div className="next-level-grid">{levels.map((level, index) => <article className={`next-level-card ${index === 0 ? 'next-level-card-ready' : ''}`} key={level.title}><span className="next-level-number">{level.number}</span><div><h3>{level.title}</h3><p>{level.detail}</p></div>{index === 0 ? <><span className="next-level-state">{progress.fractionProgress.problemsCompleted > 0 ? 'EXPLORED' : 'READY'}</span><button className="button-text next-level-action" onClick={onStart}>{progress.fractionProgress.problemsCompleted > 0 ? 'Review fraction bars' : 'Begin with fraction bars'} <ArrowRight /></button></> : <span className="next-level-state">UPCOMING</span>}</article>)}</div></section>
+}
+
+function FractionPractice({ progress, onProgressUpdate, onExit }: { progress: ProgressData; onProgressUpdate: (progress: ProgressData) => void; onExit: () => void }) {
+  const [problemIndex, setProblemIndex] = useState(0)
+  const problem = fractionProblems[problemIndex]
+  const [answer, setAnswer] = useState('')
+  const [secondAnswer, setSecondAnswer] = useState('')
+  const [choice, setChoice] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<string | null>(null)
+  const [complete, setComplete] = useState(false)
+
+  const resetProblem = (nextIndex: number) => {
+    setProblemIndex(nextIndex)
+    setAnswer('')
+    setSecondAnswer('')
+    setChoice(null)
+    setFeedback(null)
+  }
+
+  const submit = () => {
+    const correct = problem.kind === 'build'
+      ? Number(answer) === problem.numerator
+      : problem.kind === 'equivalent'
+        ? Number(answer) === problem.targetNumerator && Number(secondAnswer) === problem.targetDenominator
+        : choice === 'right'
+    if (!correct) {
+      setFeedback(problem.kind === 'compare' ? 'Look at the bars first. Which one covers more of the same whole?' : 'Trace the shaded pieces, then name how many pieces are shaded out of the whole.')
+      return
+    }
+    const nextFractionProgress = {
+      ...progress.fractionProgress,
+      problemsCompleted: progress.fractionProgress.problemsCompleted + 1,
+      correctStreak: progress.fractionProgress.correctStreak + 1,
+      equivalentFractions: progress.fractionProgress.equivalentFractions + (problem.kind === 'equivalent' ? 1 : 0),
+      comparisons: progress.fractionProgress.comparisons + (problem.kind === 'compare' ? 1 : 0),
+    }
+    onProgressUpdate({ ...progress, fractionProgress: nextFractionProgress })
+    if (problemIndex === fractionProblems.length - 1) setComplete(true)
+    else setFeedback('That’s it. The picture and the fraction say the same thing.')
+  }
+
+  if (complete) return <div className="fraction-complete"><span className="complete-mark"><CheckIcon /></span><span className="section-label">FRACTIONS / FIRST CROSSING</span><h1>You found the<br /><em>parts of the whole.</em></h1><p>You used a fraction bar to see equal pieces, build an equivalent fraction, and compare amounts.</p><div className="fraction-summary"><strong>{progress.fractionProgress.problemsCompleted}</strong><span>fraction ideas explored</span></div><button className="button-primary" onClick={onExit}>Back to your path <ArrowRight /></button></div>
+
+  return <div className="fraction-page"><div className="practice-topline"><div><span className="section-label">FRACTIONS / FRACTION BARS</span><span className="problem-count">{String(problemIndex + 1).padStart(2, '0')} / {String(fractionProblems.length).padStart(2, '0')}</span></div><div className="practice-progress"><i style={{ width: `${((problemIndex + 1) / fractionProblems.length) * 100}%` }} /></div></div><div className="fraction-intro"><button className="button-text" onClick={onExit}><ArrowLeft /> Back to your path</button><span className="section-label">THE NEXT BRIDGE</span><h1>A fraction is a whole<br /><em>seen in equal pieces.</em></h1><p>Let the picture carry some of the thinking. Count the pieces, then name the amount.</p></div><section className="fraction-card"><div className="fraction-card-kicker"><span className="section-label">{problem.kind === 'build' ? 'NAME WHAT YOU SEE' : problem.kind === 'equivalent' ? 'KEEP THE AMOUNT' : 'COMPARE THE WHOLES'}</span><span className="fraction-step-note">{problemIndex + 1} of {fractionProblems.length}</span></div><h2>{problem.prompt}</h2>{problem.kind === 'build' && <><FractionBar numerator={problem.numerator} denominator={problem.denominator} /><div className="fraction-input-line"><input autoFocus inputMode="numeric" aria-label="Shaded pieces" value={answer} onChange={(event) => setAnswer(event.target.value)} placeholder="?" /><span>/ {problem.denominator}</span></div><button className="button-primary" onClick={submit}>Name this fraction <ArrowRight /></button></>}{problem.kind === 'equivalent' && <><div className="fraction-equivalence"><FractionBar numerator={problem.numerator} denominator={problem.denominator} /><span>=</span><div className="fraction-stack-input"><input autoFocus inputMode="numeric" aria-label="Equivalent numerator" value={answer} onChange={(event) => setAnswer(event.target.value)} placeholder="?" /><i /><input inputMode="numeric" aria-label="Equivalent denominator" value={secondAnswer} onChange={(event) => setSecondAnswer(event.target.value)} placeholder="?" /></div></div><button className="button-primary" onClick={submit}>Make the same amount <ArrowRight /></button></>}{problem.kind === 'compare' && <><div className="fraction-compare"><FractionBar numerator={problem.numerator} denominator={problem.denominator} /><span className="compare-versus">or</span><FractionBar numerator={problem.compareNumerator!} denominator={problem.compareDenominator!} /></div><div className="compare-actions"><button className={choice === 'left' ? 'fraction-choice selected' : 'fraction-choice'} onClick={() => setChoice('left')}>Choose <strong>{problem.numerator}/{problem.denominator}</strong></button><button className={choice === 'right' ? 'fraction-choice selected' : 'fraction-choice'} onClick={() => setChoice('right')}>Choose <strong>{problem.compareNumerator}/{problem.compareDenominator}</strong></button></div><button className="button-primary" onClick={submit}>Check the larger piece <ArrowRight /></button></>}{feedback && <div className="fraction-feedback"><CheckIcon /><p>{feedback}</p>{feedback.startsWith('That') && <button className="button-text" onClick={() => resetProblem(problemIndex + 1)}>Next fraction <ArrowRight /></button>}</div>}</section></div>
+}
+
+function FractionBar({ numerator, denominator }: { numerator: number; denominator: number }) {
+  return <div className="fraction-bar-wrap"><div className="fraction-bar" role="img" aria-label={`${numerator} of ${denominator} equal pieces shaded`}>{Array.from({ length: denominator }, (_, index) => <span className={index < numerator ? 'shaded' : ''} key={index} />)}</div><div className="fraction-bar-label"><span>{numerator} shaded {numerator === 1 ? 'piece' : 'pieces'}</span><span>{denominator} equal pieces total</span></div></div>
 }
 
 export default App
