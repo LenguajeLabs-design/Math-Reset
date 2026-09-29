@@ -14,6 +14,7 @@ export const defaultProgress: ProgressData = {
   reflectionResponses: [],
   preferredPatterns: { largeFriendlyChunk: 0 },
   fractionProgress: { problemsCompleted: 0, correctStreak: 0, equivalentFractions: 0, comparisons: 0 },
+  wordProblemProgress: { problemsCompleted: 0, correctStreak: 0, manipulativesUsed: 0 },
 }
 
 export function loadProgress(): ProgressData {
@@ -26,6 +27,7 @@ export function loadProgress(): ProgressData {
       ...parsed,
       preferredPatterns: { ...defaultProgress.preferredPatterns, ...parsed.preferredPatterns },
       fractionProgress: { ...defaultProgress.fractionProgress, ...parsed.fractionProgress },
+      wordProblemProgress: { ...defaultProgress.wordProblemProgress, ...parsed.wordProblemProgress },
     }
   } catch {
     return defaultProgress

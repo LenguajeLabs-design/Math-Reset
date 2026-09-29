@@ -5,9 +5,10 @@ import { NumberVisual } from './components/NumberVisual'
 import { ReflectionCard } from './components/ReflectionCard'
 import { divisionProblems } from './data/divisionProblems'
 import { fractionProblems } from './data/fractionProblems'
+import { wordProblems } from './data/wordProblems'
 import { describeStrategy, isValidSplit, parseNumber, splitFeedback } from './logic/divisionEngine'
 import { loadProgress, saveProgress } from './storage/progressStore'
-import type { Confidence, FractionProblem, Problem, ProgressData, Screen } from './types'
+import type { Confidence, FractionProblem, Problem, ProgressData, Screen, WordProblem } from './types'
 import './styles.css'
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
   }
   const openProgress = () => setScreen('progress')
   const beginFractions = () => setScreen('fractions')
+  const beginWordProblems = () => setScreen('word-problems')
   const finishSession = () => setScreen('complete')
   const nextProblem = () => {
     if (problemIndex >= sessionProblems.length - 1 || sessionCount >= 6) setScreen('complete')
@@ -47,8 +49,9 @@ function App() {
     {screen === 'checkin' && <Checkin onChoose={beginSession} />}
     {screen === 'practice' && sessionProblems[problemIndex] && <Practice key={sessionProblems[problemIndex].id} problem={sessionProblems[problemIndex]} problemNumber={sessionCount + 1} total={sessionProblems.length} progress={progress} onProgressUpdate={updateProgress} onNext={nextProblem} />}
     {screen === 'complete' && <Complete progress={progress} sessionCount={Math.max(sessionCount + 1, 1)} onAgain={practiceAgain} onProgress={openProgress} />}
-    {screen === 'progress' && <ProgressView progress={progress} onBack={() => setScreen('home')} onStartFractions={beginFractions} />}
+    {screen === 'progress' && <ProgressView progress={progress} onBack={() => setScreen('home')} onStartFractions={beginFractions} onStartWordProblems={beginWordProblems} />}
     {screen === 'fractions' && <FractionPractice progress={progress} onProgressUpdate={updateProgress} onExit={openProgress} />}
+    {screen === 'word-problems' && <WordProblemPractice progress={progress} onProgressUpdate={updateProgress} onExit={openProgress} />}
   </Layout>
 }
 
@@ -188,14 +191,14 @@ function Complete({ progress, sessionCount, onAgain, onProgress }: { progress: P
   return <div className="complete-page"><div className="complete-mark"><CheckIcon /></div><span className="section-label">SESSION COMPLETE</span><h1>Nice work.<br /><em>That was enough for today.</em></h1><p className="complete-lede">{strategyMessage}</p><div className="session-summary"><div><span className="summary-number">{Math.max(progress.problemsCompleted, sessionCount)}</span><span>problems<br />explored</span></div><div><span className="summary-number">{progress.independentSolutions}</span><span>independent<br />solutions</span></div><div><span className="summary-number">{progress.hintsUsed}</span><span>hints<br />used</span></div></div><div className="complete-actions"><button className="button-primary" onClick={onAgain}>Practice again <ArrowRight /></button><button className="button-text" onClick={onProgress}>See your progress <ArrowRight /></button></div></div>
 }
 
-function ProgressView({ progress, onBack, onStartFractions }: { progress: ProgressData; onBack: () => void; onStartFractions: () => void }) {
+function ProgressView({ progress, onBack, onStartFractions, onStartWordProblems }: { progress: ProgressData; onBack: () => void; onStartFractions: () => void; onStartWordProblems: () => void }) {
   const concepts = [
     { label: 'Connect division and multiplication', done: progress.problemsCompleted > 0 },
     { label: 'Find friendly multiples', done: progress.problemsCompleted >= 2 },
     { label: 'Break numbers into easier chunks', done: progress.problemsCompleted >= 4 },
     { label: 'Work with remainders', done: progress.remaindersExplored > 0 },
   ]
-  return <div className="progress-page"><div className="progress-heading"><div><span className="section-label">YOUR PROGRESS</span><h1>A little more<br /><em>understanding.</em></h1></div><button className="button-text" onClick={onBack}><ArrowLeft /> Back to home</button></div><LearningPath progress={progress} /><NextLevels progress={progress} onStart={onStartFractions} /><div className="progress-overview"><div className="progress-card progress-card-large"><span className="section-label">DIVISION</span><h2>Seeing numbers<br />as <em>friendly pieces.</em></h2><div className="concept-list">{concepts.map((concept) => <div key={concept.label} className={concept.done ? 'done' : ''}><span>{concept.done ? <CheckIcon /> : '○'}</span><strong>{concept.label}</strong></div>)}</div></div><div className="progress-stat-stack"><div className="stat-card"><span className="section-label">PROBLEMS EXPLORED</span><strong>{progress.problemsCompleted}</strong><span>one at a time</span></div><div className="stat-card"><span className="section-label">INDEPENDENT SOLUTIONS</span><strong>{progress.independentSolutions}</strong><span>your way in</span></div><div className="stat-card"><span className="section-label">HINTS USED</span><strong>{progress.hintsUsed}</strong><span>support when useful</span></div></div></div><div className="progress-note"><span>✦</span><p><strong>Your approach is part of the learning.</strong><br />We’re keeping track of ideas that help you — not just answers that are right.</p></div></div>
+  return <div className="progress-page"><div className="progress-heading"><div><span className="section-label">YOUR PROGRESS</span><h1>A little more<br /><em>understanding.</em></h1></div><button className="button-text" onClick={onBack}><ArrowLeft /> Back to home</button></div><LearningPath progress={progress} /><NextLevels progress={progress} onStartFractions={onStartFractions} onStartWordProblems={onStartWordProblems} /><div className="progress-overview"><div className="progress-card progress-card-large"><span className="section-label">DIVISION</span><h2>Seeing numbers<br />as <em>friendly pieces.</em></h2><div className="concept-list">{concepts.map((concept) => <div key={concept.label} className={concept.done ? 'done' : ''}><span>{concept.done ? <CheckIcon /> : '○'}</span><strong>{concept.label}</strong></div>)}</div></div><div className="progress-stat-stack"><div className="stat-card"><span className="section-label">PROBLEMS EXPLORED</span><strong>{progress.problemsCompleted}</strong><span>one at a time</span></div><div className="stat-card"><span className="section-label">INDEPENDENT SOLUTIONS</span><strong>{progress.independentSolutions}</strong><span>your way in</span></div><div className="stat-card"><span className="section-label">HINTS USED</span><strong>{progress.hintsUsed}</strong><span>support when useful</span></div></div></div><div className="progress-note"><span>✦</span><p><strong>Your approach is part of the learning.</strong><br />We’re keeping track of ideas that help you — not just answers that are right.</p></div></div>
 }
 
 function LearningPath({ progress }: { progress: ProgressData }) {
@@ -206,6 +209,7 @@ function LearningPath({ progress }: { progress: ProgressData }) {
     { label: 'Choose your way', detail: 'More than one good split', done: progress.currentStage >= 3 && progress.problemsCompleted >= 6 },
     { label: 'Remainders', detail: 'What does not divide evenly', done: progress.remaindersExplored > 0, upcoming: progress.currentStage < 4 },
     { label: 'Fractions', detail: 'Equal pieces of a whole', done: progress.fractionProgress.problemsCompleted > 0, upcoming: progress.remaindersExplored === 0 },
+    { label: 'Use it in context', detail: 'Word problems and real life', done: progress.wordProblemProgress.problemsCompleted > 0, upcoming: progress.fractionProgress.problemsCompleted === 0 },
   ]
   const currentIndex = path.findIndex((node) => !node.done && !node.upcoming)
 
@@ -217,14 +221,15 @@ function LearningPath({ progress }: { progress: ProgressData }) {
   </section>
 }
 
-function NextLevels({ progress, onStart }: { progress: ProgressData; onStart: () => void }) {
+function NextLevels({ progress, onStartFractions, onStartWordProblems }: { progress: ProgressData; onStartFractions: () => void; onStartWordProblems: () => void }) {
   const levels = [
     { number: '06', title: 'Fractions', detail: 'See parts as equal pieces.' },
-    { number: '07', title: 'Decimals & percent', detail: 'Move between parts, wholes, and proportion.' },
-    { number: '08', title: 'Early algebra', detail: 'Notice the unknown and find what balances.' },
+    { number: '07', title: 'Word problems', detail: 'Bring the pieces into everyday situations.' },
+    { number: '08', title: 'Decimals & percent', detail: 'Move between parts, wholes, and proportion.' },
+    { number: '09', title: 'Early algebra', detail: 'Notice the unknown and find what balances.' },
   ]
 
-  return <section className="next-levels" aria-labelledby="next-levels-title"><div className="next-levels-heading"><div><span className="section-label">AFTER DIVISION</span><h2 id="next-levels-title">The crossing <em>continues.</em></h2></div><span className="path-caption">Future modules, held gently.</span></div><div className="next-level-grid">{levels.map((level, index) => <article className={`next-level-card ${index === 0 ? 'next-level-card-ready' : ''}`} key={level.title}><span className="next-level-number">{level.number}</span><div><h3>{level.title}</h3><p>{level.detail}</p></div>{index === 0 ? <><span className="next-level-state">{progress.fractionProgress.problemsCompleted > 0 ? 'EXPLORED' : 'READY'}</span><button className="button-text next-level-action" onClick={onStart}>{progress.fractionProgress.problemsCompleted > 0 ? 'Review fraction bars' : 'Begin with fraction bars'} <ArrowRight /></button></> : <span className="next-level-state">UPCOMING</span>}</article>)}</div></section>
+  return <section className="next-levels" aria-labelledby="next-levels-title"><div className="next-levels-heading"><div><span className="section-label">AFTER DIVISION</span><h2 id="next-levels-title">The crossing <em>continues.</em></h2></div><span className="path-caption">Future modules, held gently.</span></div><div className="next-level-grid">{levels.map((level, index) => { const fractions = index === 0; const wordProblems = index === 1; const unlocked = fractions || progress.fractionProgress.problemsCompleted > 0; const complete = fractions ? progress.fractionProgress.problemsCompleted > 0 : progress.wordProblemProgress.problemsCompleted > 0; const onStart = fractions ? onStartFractions : onStartWordProblems; return <article className={`next-level-card ${(fractions || wordProblems) && unlocked ? 'next-level-card-ready' : ''}`} key={level.title}><span className="next-level-number">{level.number}</span><div><h3>{level.title}</h3><p>{level.detail}</p></div>{(fractions || wordProblems) && unlocked ? <><span className="next-level-state">{complete ? 'EXPLORED' : 'READY'}</span><button className="button-text next-level-action" onClick={onStart}>{complete ? `Review ${fractions ? 'fraction bars' : 'word problems'}` : fractions ? 'Begin with fraction bars' : 'Try a real-life problem'} <ArrowRight /></button></> : <span className="next-level-state">{wordProblems ? 'AFTER FRACTIONS' : 'UPCOMING'}</span>}</article> })}</div></section>
 }
 
 function FractionPractice({ progress, onProgressUpdate, onExit }: { progress: ProgressData; onProgressUpdate: (progress: ProgressData) => void; onExit: () => void }) {
@@ -274,6 +279,51 @@ function FractionPractice({ progress, onProgressUpdate, onExit }: { progress: Pr
 function FractionBar({ numerator, denominator, showShadedCount = true }: { numerator: number; denominator: number; showShadedCount?: boolean }) {
   const visualLabel = showShadedCount ? `${numerator} of ${denominator} equal pieces shaded` : `Fraction bar split into ${denominator} equal pieces`
   return <div className="fraction-bar-wrap"><div className="fraction-bar" role="img" aria-label={visualLabel}>{Array.from({ length: denominator }, (_, index) => <span className={index < numerator ? 'shaded' : ''} key={index} />)}</div><div className={`fraction-bar-label ${showShadedCount ? '' : 'single'}`}>{showShadedCount && <span>{numerator} shaded {numerator === 1 ? 'piece' : 'pieces'}</span>}<span>{denominator} equal pieces total</span></div></div>
+}
+
+function WordProblemPractice({ progress, onProgressUpdate, onExit }: { progress: ProgressData; onProgressUpdate: (progress: ProgressData) => void; onExit: () => void }) {
+  const [problemIndex, setProblemIndex] = useState(0)
+  const [answer, setAnswer] = useState('')
+  const [feedback, setFeedback] = useState<string | null>(null)
+  const [hintShown, setHintShown] = useState(false)
+  const [complete, setComplete] = useState(false)
+  const problem: WordProblem = wordProblems[problemIndex]
+
+  const resetProblem = (nextIndex: number) => {
+    setProblemIndex(nextIndex)
+    setAnswer('')
+    setFeedback(null)
+    setHintShown(false)
+  }
+
+  const submit = () => {
+    const normalizedAnswer = problem.kind === 'fraction' ? answer.replace(/\s/g, '') : answer.trim()
+    const correct = normalizedAnswer === problem.answer
+    if (!correct) {
+      setFeedback(problem.kind === 'fraction' ? 'The denominator names all equal slices. The numerator names the slices you ate.' : `Use the pieces as equal groups. ${problem.total} pieces shared across ${problem.groups} groups.`)
+      return
+    }
+    const nextWordProgress = {
+      ...progress.wordProblemProgress,
+      problemsCompleted: progress.wordProblemProgress.problemsCompleted + 1,
+      correctStreak: progress.wordProblemProgress.correctStreak + 1,
+      manipulativesUsed: progress.wordProblemProgress.manipulativesUsed + 1,
+    }
+    onProgressUpdate({ ...progress, wordProblemProgress: nextWordProgress })
+    if (problemIndex === wordProblems.length - 1) setComplete(true)
+    else setFeedback('That fits the story. The pieces make the situation easier to see.')
+  }
+
+  if (complete) return <div className="word-complete"><span className="complete-mark"><CheckIcon /></span><span className="section-label">WORD PROBLEMS / IN CONTEXT</span><h1>You carried the<br /><em>math into the world.</em></h1><p>You used groups and equal pieces to make sense of three everyday situations.</p><div className="fraction-summary"><strong>{progress.wordProblemProgress.problemsCompleted}</strong><span>real-life problems explored</span></div><button className="button-primary" onClick={onExit}>Back to your path <ArrowRight /></button></div>
+
+  return <div className="word-problems-page"><div className="practice-topline"><div><span className="section-label">MATH IN CONTEXT / MANIPULATIVES</span><span className="problem-count">{String(problemIndex + 1).padStart(2, '0')} / {String(wordProblems.length).padStart(2, '0')}</span></div><div className="practice-progress"><i style={{ width: `${((problemIndex + 1) / wordProblems.length) * 100}%` }} /></div></div><div className="word-intro"><button className="button-text" onClick={onExit}><ArrowLeft /> Back to your path</button><span className="section-label">THE NEXT BRIDGE</span><h1>Math becomes useful<br /><em>when it meets a story.</em></h1><p>Read the situation, look at the pieces, and choose the operation that makes sense.</p></div><section className="word-problem-card"><div className="fraction-card-kicker"><span className="section-label">{problem.title}</span><span className="fraction-step-note">{problemIndex + 1} of {wordProblems.length}</span></div><p className="word-story">{problem.story}</p><h2>{problem.prompt}</h2><WordProblemManipulative problem={problem} /><div className="word-answer-line"><input autoFocus inputMode={problem.kind === 'fraction' ? 'text' : 'numeric'} aria-label={problem.prompt} value={answer} onChange={(event) => setAnswer(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') submit() }} placeholder="?" /><span>{problem.unit}</span></div><button className="button-primary" onClick={submit}>Check my answer <ArrowRight /></button>{feedback && <div className={`word-feedback ${feedback.startsWith('That') ? 'positive' : ''}`}><p>{feedback}</p>{feedback.startsWith('That') && <button className="button-text" onClick={() => resetProblem(problemIndex + 1)}>Next story <ArrowRight /></button>}</div>}{!feedback && <button className="button-text word-hint" onClick={() => setHintShown(true)}>Need a small clue? <ArrowRight /></button>}{hintShown && !feedback && <p className="word-hint-copy">{problem.kind === 'fraction' ? 'Count all the equal slices first, then count only the slices you ate.' : `Imagine placing ${problem.total} pieces into ${problem.groups} equal groups.`}</p>}</section></div>
+}
+
+function WordProblemManipulative({ problem }: { problem: WordProblem }) {
+  if (problem.kind === 'fraction') return <div className="word-manipulative fraction-manipulative"><span className="manipulative-label">THE WHOLE PIZZA</span><FractionBar numerator={problem.numerator!} denominator={problem.denominator!} showShadedCount={false} /></div>
+  const tokenCount = problem.total ?? 0
+  const groupCount = problem.groups ?? 0
+  return <div className="word-manipulative"><div className="manipulative-head"><span className="manipulative-label">THE PIECES</span><span>{tokenCount} total</span></div><div className="token-field" aria-label={`${tokenCount} pieces to share into ${groupCount} equal groups`}>{Array.from({ length: tokenCount }, (_, index) => <i className="token" key={index} />)}</div><div className="group-slots">{Array.from({ length: groupCount }, (_, index) => <div className="group-slot" key={index}><span>{problem.kind === 'share' ? `friend 0${index + 1}` : `row 0${index + 1}`}</span><b>?</b></div>)}</div></div>
 }
 
 export default App
