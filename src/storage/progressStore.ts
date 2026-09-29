@@ -15,6 +15,7 @@ export const defaultProgress: ProgressData = {
   preferredPatterns: { largeFriendlyChunk: 0 },
   fractionProgress: { problemsCompleted: 0, correctStreak: 0, equivalentFractions: 0, comparisons: 0 },
   wordProblemProgress: { problemsCompleted: 0, correctStreak: 0, manipulativesUsed: 0 },
+  decimalProgress: { problemsCompleted: 0, correctStreak: 0, decimalAnswers: 0, percentAnswers: 0 },
 }
 
 export function loadProgress(): ProgressData {
@@ -28,6 +29,7 @@ export function loadProgress(): ProgressData {
       preferredPatterns: { ...defaultProgress.preferredPatterns, ...parsed.preferredPatterns },
       fractionProgress: { ...defaultProgress.fractionProgress, ...parsed.fractionProgress },
       wordProblemProgress: { ...defaultProgress.wordProblemProgress, ...parsed.wordProblemProgress },
+      decimalProgress: { ...defaultProgress.decimalProgress, ...parsed.decimalProgress },
     }
   } catch {
     return defaultProgress

@@ -1,5 +1,5 @@
 export type Confidence = 'comfortable' | 'rusty' | 'difficult' | 'anxious'
-export type Screen = 'home' | 'checkin' | 'practice' | 'complete' | 'progress' | 'fractions' | 'word-problems'
+export type Screen = 'home' | 'checkin' | 'practice' | 'complete' | 'progress' | 'fractions' | 'word-problems' | 'decimals'
 export type FeedbackTone = 'positive' | 'neutral' | 'warm'
 
 export interface Problem {
@@ -26,6 +26,7 @@ export interface ProgressData {
   preferredPatterns: { largeFriendlyChunk: number }
   fractionProgress: { problemsCompleted: number; correctStreak: number; equivalentFractions: number; comparisons: number }
   wordProblemProgress: { problemsCompleted: number; correctStreak: number; manipulativesUsed: number }
+  decimalProgress: { problemsCompleted: number; correctStreak: number; decimalAnswers: number; percentAnswers: number }
 }
 
 export type FractionKind = 'build' | 'equivalent' | 'compare'
@@ -56,6 +57,18 @@ export interface WordProblem {
   groups?: number
   numerator?: number
   denominator?: number
+}
+
+export type DecimalKind = 'decimal' | 'percent'
+
+export interface DecimalProblem {
+  id: string
+  kind: DecimalKind
+  title: string
+  prompt: string
+  answer: string
+  unit: string
+  shaded: number
 }
 
 export interface SplitFeedback {
